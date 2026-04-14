@@ -15,7 +15,7 @@ st.markdown("""
 <style>
     /* Estilos Globales */
     .stApp {
-        background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+        background: linear-gradient(135deg, #0a1128, #1c2541, #0a1128);
         font-family: 'Inter', sans-serif;
     }
     
