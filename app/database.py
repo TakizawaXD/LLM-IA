@@ -16,8 +16,24 @@ class DatabaseManager:
         """Creates the database and schema if it doesn't exist."""
         try:
             with sqlite3.connect(self.db_path) as conn:
-                # We'll create a table for raw data and another for processed if needed
-                # But for simplicity, we'll use pandas.to_sql for schema generation
+                cursor = conn.cursor()
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS simulation_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                        age INTEGER,
+                        sex TEXT,
+                        pclass INTEGER,
+                        sibsp INTEGER,
+                        parch INTEGER,
+                        fare REAL,
+                        embarked TEXT,
+                        alone TEXT,
+                        prediction_outcome INTEGER,
+                        survival_probability REAL
+                    )
+                """)
+                conn.commit()
                 app_logger.info(f"Database initialized at {self.db_path}")
         except Exception as e:
             app_logger.error(f"DB Initialization Error: {e}")
@@ -30,6 +46,25 @@ class DatabaseManager:
                 app_logger.info(f"Saved {len(df)} rows to table '{table_name}'")
         except Exception as e:
             app_logger.error(f"Error saving to DB: {e}")
+
+    def log_simulation(self, payload: dict):
+        """Logs user interactions from the Simulator directly into DB."""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                    INSERT INTO simulation_logs 
+                    (age, sex, pclass, sibsp, parch, fare, embarked, alone, prediction_outcome, survival_probability)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    payload.get('age'), payload.get('sex'), payload.get('pclass'),
+                    payload.get('sibsp'), payload.get('parch'), payload.get('fare'),
+                    payload.get('embarked'), payload.get('alone'), 
+                    payload.get('prediction_outcome'), payload.get('survival_probability')
+                ))
+                conn.commit()
+        except Exception as e:
+            app_logger.error(f"Error logging simulation to DB: {e}")
 
     def load_query(self, query: str) -> pd.DataFrame:
         """Executes a SQL query and returns a DataFrame."""
